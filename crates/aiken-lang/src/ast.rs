@@ -449,6 +449,7 @@ pub struct Decorator {
 pub enum DecoratorKind {
     Tag { value: String, base: Base },
     List,
+    Int,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

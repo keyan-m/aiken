@@ -513,6 +513,14 @@ impl Data {
 
         let mut variants = vec![];
 
+        if data_type
+            .decorators
+            .iter()
+            .any(|d| matches!(d.kind, DecoratorKind::Int))
+        {
+            return Ok(Data::Integer);
+        }
+
         if data_type.constructors.len() == 1
             && data_type.constructors[0].sugar
             && data_type

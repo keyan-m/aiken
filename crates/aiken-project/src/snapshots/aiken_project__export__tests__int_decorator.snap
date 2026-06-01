@@ -1,0 +1,29 @@
+---
+source: crates/aiken-project/src/export.rs
+description: "Code:\n\n@int\npub type Signal {\n  Red\n  @tag(7)\n  Yellow\n  Green\n}\n\npub fn same(signal: Signal) -> Signal {\n  signal\n}\n"
+---
+{
+  "name": "test_module.same",
+  "parameters": [
+    {
+      "title": "signal",
+      "schema": {
+        "$ref": "#/definitions/test_module~1Signal"
+      }
+    }
+  ],
+  "return_type": {
+    "title": "return_type",
+    "schema": {
+      "$ref": "#/definitions/test_module~1Signal"
+    }
+  },
+  "compiledCode": "46010100200101",
+  "hash": "e090c94a874e6f220d343402ca1287b0b333daedaf0bd3d4335006bb",
+  "definitions": {
+    "test_module/Signal": {
+      "title": "Signal",
+      "dataType": "integer"
+    }
+  }
+}

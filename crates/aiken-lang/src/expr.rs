@@ -1119,13 +1119,56 @@ impl UntypedExpr {
             data,
             tipo,
             |data_types, data, tipo| match data {
-                PlutusData::BigInt(ref i) => Ok(UntypedExpr::UInt {
-                    location: Span::empty(),
-                    base: Base::Decimal {
-                        numeric_underscore: false,
-                    },
-                    value: from_pallas_bigint(i).to_string(),
-                }),
+                PlutusData::BigInt(ref i) => {
+                    let value = from_pallas_bigint(i).to_string();
+
+                    if let Some(data_type) = lookup_data_type_by_tipo(data_types, &tipo)
+                        && data_type
+                            .decorators
+                            .iter()
+                            .any(|decorator| matches!(decorator.kind, ast::DecoratorKind::Int))
+                    {
+                        let index = value.parse::<usize>().map_err(|_| {
+                            format!("invalid integer tag {value} for type annotation {tipo:?}")
+                        })?;
+
+                        let constructor = data_type
+                            .constructors
+                            .iter()
+                            .enumerate()
+                            .find(|(position, constructor)| {
+                                let tag = constructor
+                                    .decorators
+                                    .iter()
+                                    .find_map(|decorator| match &decorator.kind {
+                                        ast::DecoratorKind::Tag { value, .. } => {
+                                            Some(value.parse().unwrap())
+                                        }
+                                        _ => None,
+                                    })
+                                    .unwrap_or(*position);
+
+                                tag == index
+                            })
+                            .map(|(_, constructor)| constructor)
+                            .ok_or_else(|| {
+                                format!("invalid integer tag {index} for type annotation {tipo:?}")
+                            })?;
+
+                        return Ok(UntypedExpr::Var {
+                            location: Span::empty(),
+                            name: constructor.name.to_string(),
+                        });
+                    }
+
+                    Ok(UntypedExpr::UInt {
+                        location: Span::empty(),
+                        base: Base::Decimal {
+                            numeric_underscore: false,
+                        },
+                        value,
+                    })
+                }
 
                 PlutusData::BoundedBytes(bytes) => {
                     if tipo.is_string() {

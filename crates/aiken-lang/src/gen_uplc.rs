@@ -40,8 +40,8 @@ use crate::{
     },
 };
 use builder::{
-    DISCARDED, get_constr_index_variant, introduce_name, introduce_pattern, pop_pattern,
-    softcast_data_to_type_otherwise, unknown_data_to_type,
+    DISCARDED, get_constr_index_variant, has_decorator, introduce_name, introduce_pattern,
+    pop_pattern, softcast_data_to_type_otherwise, unknown_data_to_type,
 };
 use decision_tree::{Assigned, CaseTest, DecisionTree, TreeGen, get_tipo_by_path};
 use indexmap::IndexMap;
@@ -2291,6 +2291,10 @@ impl<'a> CodeGenerator<'a> {
                         .decorators
                         .iter()
                         .any(|dec| matches!(dec.kind, DecoratorKind::List));
+                    let int_decorator = data_type
+                        .decorators
+                        .iter()
+                        .any(|dec| matches!(dec.kind, DecoratorKind::Int));
 
                     let constr_clauses = data_type.constructors.iter().enumerate().rfold(
                         otherwise_delayed.clone().unwrap_or_else(DELAY_ERROR),
@@ -2339,7 +2343,9 @@ impl<'a> CodeGenerator<'a> {
                             );
                             constr_args.reverse();
 
-                            let then = if constr_args.is_empty() {
+                            let then = if int_decorator {
+                                constr_then
+                            } else if constr_args.is_empty() {
                                 AirTree::fields_empty(
                                     AirTree::local_var(
                                         format!(
@@ -2515,7 +2521,12 @@ impl<'a> CodeGenerator<'a> {
                     stick_set.clone(),
                 );
 
-                let test_subject_name = if data_type.is_some() {
+                let int_decorator = data_type
+                    .as_ref()
+                    .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::Int)))
+                    .unwrap_or(false);
+
+                let test_subject_name = if data_type.is_some() && !int_decorator {
                     format!("{}_index", current_subject_name.clone(),)
                 } else {
                     current_subject_name.clone()
@@ -3875,11 +3886,17 @@ impl<'a> CodeGenerator<'a> {
                             .decorators
                             .iter()
                             .any(|dec| matches!(dec.kind, DecoratorKind::List));
+                        let int_decorator = data_type
+                            .decorators
+                            .iter()
+                            .any(|dec| matches!(dec.kind, DecoratorKind::Int));
 
                         let mut term = Term::empty_list();
 
                         if constr_type.arguments.is_empty() {
-                            if !list_decorator {
+                            if int_decorator {
+                                term = Term::integer(constr_index.into());
+                            } else if !list_decorator {
                                 term = Term::constr_data()
                                     .apply(Term::integer(constr_index.into()))
                                     .apply(term);
@@ -4267,6 +4284,7 @@ impl<'a> CodeGenerator<'a> {
                                     lookup_data_type_by_tipo(&self.data_types, &right_tipo);
 
                                 if left_data_type
+                                    .as_ref()
                                     .map(|d| {
                                         d.decorators
                                             .iter()
@@ -4277,7 +4295,20 @@ impl<'a> CodeGenerator<'a> {
                                     left = Term::list_data().apply(left)
                                 }
 
+                                if left_data_type
+                                    .as_ref()
+                                    .map(|d| {
+                                        d.decorators
+                                            .iter()
+                                            .any(|dec| matches!(dec.kind, DecoratorKind::Int))
+                                    })
+                                    .unwrap_or(false)
+                                {
+                                    left = Term::i_data().apply(left)
+                                }
+
                                 if right_data_type
+                                    .as_ref()
                                     .map(|d| {
                                         d.decorators
                                             .iter()
@@ -4286,6 +4317,18 @@ impl<'a> CodeGenerator<'a> {
                                     .unwrap_or(false)
                                 {
                                     right = Term::list_data().apply(right)
+                                }
+
+                                if right_data_type
+                                    .as_ref()
+                                    .map(|d| {
+                                        d.decorators
+                                            .iter()
+                                            .any(|dec| matches!(dec.kind, DecoratorKind::Int))
+                                    })
+                                    .unwrap_or(false)
+                                {
+                                    right = Term::i_data().apply(right)
                                 }
 
                                 builtin.apply(left).apply(right)
@@ -4585,8 +4628,12 @@ impl<'a> CodeGenerator<'a> {
                             .decorators
                             .iter()
                             .any(|dec| matches!(dec.kind, DecoratorKind::List));
+                        let int_decorator = data_type
+                            .decorators
+                            .iter()
+                            .any(|dec| matches!(dec.kind, DecoratorKind::Int));
 
-                        if list_decorator {
+                        if list_decorator || int_decorator {
                             subject
                         } else {
                             Term::var(CONSTR_INDEX_EXPOSER).apply(subject)
@@ -4703,6 +4750,17 @@ impl<'a> CodeGenerator<'a> {
                 let mut arg_vec = vec![];
                 for _ in 0..count {
                     arg_vec.push(arg_stack.pop().unwrap());
+                }
+
+                if lookup_data_type_by_tipo(&self.data_types, &tipo)
+                    .as_ref()
+                    .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::Int)))
+                    .unwrap_or(false)
+                {
+                    let constr_index =
+                        tag.expect("@int constructors must have a constructor index");
+
+                    return Some(Term::integer(constr_index.into()));
                 }
 
                 let mut term = Term::empty_list();

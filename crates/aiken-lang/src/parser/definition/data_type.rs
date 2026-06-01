@@ -14,6 +14,7 @@ pub fn decorators() -> impl Parser<Token, Vec<ast::Decorator>, Error = ParseErro
                 tag_value.delimited_by(just(Token::LeftParen), just(Token::RightParen)),
             ),
             select! { Token::Name { name } if name == "list" => ast::DecoratorKind::List },
+            select! { Token::Name { name } if name == "int" => ast::DecoratorKind::Int },
         )))
         .map_with_span(|kind, span| ast::Decorator {
             kind,

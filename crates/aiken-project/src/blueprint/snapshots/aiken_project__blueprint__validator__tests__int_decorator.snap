@@ -1,0 +1,21 @@
+---
+source: crates/aiken-project/src/blueprint/validator.rs
+description: "Code:\n\n@int\npub type Signal {\n    Red\n    @tag(7)\n    Yellow\n    Green\n}\n\nvalidator int_decorator {\n  mint(redeemer: Signal, _policy_id: ByteArray, _transaction: Data) {\n    True\n  }\n}\n"
+---
+{
+  "title": "test_module.int_decorator.mint",
+  "redeemer": {
+    "title": "redeemer",
+    "schema": {
+      "$ref": "#/definitions/test_module~1Signal"
+    }
+  },
+  "compiledCode": "<redacted>",
+  "hash": "<redacted>",
+  "definitions": {
+    "test_module/Signal": {
+      "title": "Signal",
+      "dataType": "integer"
+    }
+  }
+}

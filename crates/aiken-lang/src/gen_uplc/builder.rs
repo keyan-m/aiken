@@ -40,6 +40,16 @@ pub const INCORRECT_CONSTR: &str = "__INCORRECT_CONSTR";
 pub const CONSTR_INDEX_MISMATCH: &str = "__CONSTR_INDEX_MISMATCH";
 pub const DISCARDED: &str = "_";
 
+pub fn has_decorator(
+    data_type: &TypedDataType,
+    predicate: impl Fn(&DecoratorKind) -> bool,
+) -> bool {
+    data_type
+        .decorators
+        .iter()
+        .any(|decorator| predicate(&decorator.kind))
+}
+
 #[derive(Clone, Debug)]
 #[allow(clippy::large_enum_variant)]
 pub enum CodeGenFunction {
@@ -503,15 +513,19 @@ pub fn known_data_to_type(
         }
         Some(UplcType::Bls12_381MlResult) => panic!("ML Result not supported"),
         Some(UplcType::Data) | None => {
-            let list_decorator = lookup_data_type_by_tipo(data_types, field_type)
-                .map(|dt| {
-                    dt.decorators
-                        .iter()
-                        .any(|dec| matches!(dec.kind, DecoratorKind::List))
-                })
+            let data_type = lookup_data_type_by_tipo(data_types, field_type);
+            let list_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::List)))
+                .unwrap_or(false);
+            let int_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::Int)))
                 .unwrap_or(false);
 
-            if list_decorator {
+            if int_decorator {
+                Term::un_i_data().apply(term)
+            } else if list_decorator {
                 Term::unlist_data().apply(term)
             } else {
                 term
@@ -560,15 +574,19 @@ pub fn unknown_data_to_type(
         }),
 
         Some(UplcType::Data) | None => {
-            let list_decorator = lookup_data_type_by_tipo(data_types, field_type)
-                .map(|dt| {
-                    dt.decorators
-                        .iter()
-                        .any(|dec| matches!(dec.kind, DecoratorKind::List))
-                })
+            let data_type = lookup_data_type_by_tipo(data_types, field_type);
+            let list_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::List)))
+                .unwrap_or(false);
+            let int_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::Int)))
                 .unwrap_or(false);
 
-            if list_decorator {
+            if int_decorator {
+                Term::un_i_data().apply(term)
+            } else if list_decorator {
                 Term::unlist_data().apply(term)
             } else {
                 term
@@ -596,15 +614,19 @@ pub fn softcast_data_to_type_otherwise(
 
     value.as_var("__val", |val| match uplc_type {
         None => {
-            let list_decorator = lookup_data_type_by_tipo(data_types, field_type)
-                .map(|dt| {
-                    dt.decorators
-                        .iter()
-                        .any(|dec| matches!(dec.kind, DecoratorKind::List))
-                })
+            let data_type = lookup_data_type_by_tipo(data_types, field_type);
+            let list_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::List)))
+                .unwrap_or(false);
+            let int_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::Int)))
                 .unwrap_or(false);
 
-            if list_decorator {
+            if int_decorator {
+                Term::choose_data_integer(val, callback, &otherwise_delayed)
+            } else if list_decorator {
                 Term::choose_data_list(val, callback, &otherwise_delayed)
             } else {
                 Term::choose_data_constr(val, callback, &otherwise_delayed)
@@ -790,15 +812,19 @@ pub fn convert_type_to_data(
         ),
 
         Some(UplcType::Data) | None => {
-            let list_decorator = lookup_data_type_by_tipo(data_types, field_type)
-                .map(|dt| {
-                    dt.decorators
-                        .iter()
-                        .any(|dec| matches!(dec.kind, DecoratorKind::List))
-                })
+            let data_type = lookup_data_type_by_tipo(data_types, field_type);
+            let list_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::List)))
+                .unwrap_or(false);
+            let int_decorator = data_type
+                .as_ref()
+                .map(|dt| has_decorator(dt, |kind| matches!(kind, DecoratorKind::Int)))
                 .unwrap_or(false);
 
-            if list_decorator {
+            if int_decorator {
+                Term::i_data().apply(term)
+            } else if list_decorator {
                 Term::list_data().apply(term)
             } else {
                 term

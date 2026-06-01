@@ -1066,6 +1066,30 @@ impl TypedDataType {
 
         validate_decorators_in_context(&self.decorators, context, None)?;
 
+        if let Some(decorator) = self
+            .decorators
+            .iter()
+            .find(|decorator| matches!(decorator.kind, DecoratorKind::Int))
+        {
+            if self.constructors.len() == 1 && self.constructors[0].sugar {
+                return Err(Error::DecoratorValidation {
+                    location: decorator.location,
+                    message: "@int can only be used on custom enum types".to_string(),
+                });
+            }
+
+            if self
+                .constructors
+                .iter()
+                .any(|constructor| !constructor.arguments.is_empty())
+            {
+                return Err(Error::DecoratorValidation {
+                    location: decorator.location,
+                    message: "@int enum constructors cannot have fields".to_string(),
+                });
+            }
+        }
+
         let mut seen = BTreeMap::new();
 
         // Validate constructor decorators
@@ -1141,6 +1165,7 @@ impl DecoratorKind {
         match self {
             DecoratorKind::Tag { .. } => &[DecoratorContext::Record, DecoratorContext::Constructor],
             DecoratorKind::List => &[DecoratorContext::Record],
+            DecoratorKind::Int => &[DecoratorContext::Record, DecoratorContext::Enum],
         }
     }
 
@@ -1154,6 +1179,7 @@ impl DecoratorKind {
         match self {
             DecoratorKind::Tag { .. } => Ok(()),
             DecoratorKind::List => Ok(()),
+            DecoratorKind::Int => Ok(()),
         }
     }
 
@@ -1161,8 +1187,13 @@ impl DecoratorKind {
         match (self, other) {
             (DecoratorKind::Tag { .. }, DecoratorKind::List) => true,
             (DecoratorKind::Tag { .. }, DecoratorKind::Tag { .. }) => true,
+            (DecoratorKind::Tag { .. }, DecoratorKind::Int) => true,
             (DecoratorKind::List, DecoratorKind::Tag { .. }) => true,
             (DecoratorKind::List, DecoratorKind::List) => true,
+            (DecoratorKind::List, DecoratorKind::Int) => true,
+            (DecoratorKind::Int, DecoratorKind::Tag { .. }) => true,
+            (DecoratorKind::Int, DecoratorKind::List) => true,
+            (DecoratorKind::Int, DecoratorKind::Int) => true,
         }
     }
 }

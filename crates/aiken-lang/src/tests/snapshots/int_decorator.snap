@@ -1,0 +1,11 @@
+---
+source: crates/aiken-lang/src/tests/format.rs
+description: "Code:\n\n@int\ntype Signal {\n  Red\n  @tag(7)\n  Yellow\n  Green\n}\n"
+---
+@int
+type Signal {
+  Red
+  @tag(7)
+  Yellow
+  Green
+}

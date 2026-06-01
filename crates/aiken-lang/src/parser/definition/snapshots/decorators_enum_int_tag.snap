@@ -1,0 +1,57 @@
+---
+source: crates/aiken-lang/src/parser/definition/data_type.rs
+description: "Code:\n\n@int\npub type Signal {\n  Red\n  @tag(7)\n  Yellow\n  Green\n}\n"
+---
+DataType(
+    DataType {
+        decorators: [
+            Decorator {
+                kind: Int,
+                location: 0..4,
+            },
+        ],
+        constructors: [
+            RecordConstructor {
+                decorators: [],
+                location: 25..28,
+                name: "Red",
+                arguments: [],
+                doc: None,
+                sugar: false,
+            },
+            RecordConstructor {
+                decorators: [
+                    Decorator {
+                        kind: Tag {
+                            value: "7",
+                            base: Decimal {
+                                numeric_underscore: false,
+                            },
+                        },
+                        location: 31..38,
+                    },
+                ],
+                location: 31..47,
+                name: "Yellow",
+                arguments: [],
+                doc: None,
+                sugar: false,
+            },
+            RecordConstructor {
+                decorators: [],
+                location: 50..55,
+                name: "Green",
+                arguments: [],
+                doc: None,
+                sugar: false,
+            },
+        ],
+        doc: None,
+        location: 0..57,
+        name: "Signal",
+        opaque: false,
+        parameters: [],
+        public: true,
+        typed_parameters: [],
+    },
+)

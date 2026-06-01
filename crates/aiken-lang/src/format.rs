@@ -1826,6 +1826,7 @@ impl<'comments> Formatter<'comments> {
                     docvec!["@tag(", self.uint(value, base), ")"]
                 }
                 crate::ast::DecoratorKind::List => "@list".to_doc(),
+                crate::ast::DecoratorKind::Int => "@int".to_doc(),
             }),
             line(),
         )
