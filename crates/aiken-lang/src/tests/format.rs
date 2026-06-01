@@ -1611,6 +1611,21 @@ fn decorators_on_constructor() {
 }
 
 #[test]
+fn int_decorator() {
+    assert_format!(
+        r#"
+        @int
+        type Signal {
+          Red
+          @tag(7)
+          Yellow
+          Green
+        }
+        "#
+    );
+}
+
+#[test]
 fn long_import_line() {
     assert_format!(
         r#"

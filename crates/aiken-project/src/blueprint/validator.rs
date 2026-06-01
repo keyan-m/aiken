@@ -884,6 +884,27 @@ mod tests {
     }
 
     #[test]
+    fn int_decorator() {
+        assert_validator!(
+            r#"
+            @int
+            pub type Signal {
+                Red
+                @tag(7)
+                Yellow
+                Green
+            }
+
+            validator int_decorator {
+              mint(redeemer: Signal, _policy_id: ByteArray, _transaction: Data) {
+                True
+              }
+            }
+            "#
+        );
+    }
+
+    #[test]
     fn rogue_generic() {
         assert_validator!(
             r#"

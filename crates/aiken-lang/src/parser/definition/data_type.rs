@@ -214,4 +214,19 @@ mod tests {
             "#
         );
     }
+
+    #[test]
+    fn decorators_enum_int_tag() {
+        assert_definition!(
+            r#"
+            @int
+            pub type Signal {
+              Red
+              @tag(7)
+              Yellow
+              Green
+            }
+            "#
+        );
+    }
 }
