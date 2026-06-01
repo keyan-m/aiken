@@ -22,6 +22,14 @@ type CanWork {
   second: (Int, ByteArray),
 }
 
+@int
+type Signal {
+  Red
+  @tag(7)
+  Yellow
+  Green
+}
+
 fn yes(
   food: Int,
   weight: Int,
@@ -98,6 +106,24 @@ test bar() {
       }
     }
     Het { .. } -> fail @"Impossible"
+  }
+}
+
+test int_decorator() {
+  let red: Data = Red
+  let yellow: Data = Yellow
+  let green = Green |> as_data
+
+  expect red_index: Int = red
+  expect yellow_index: Int = yellow
+  expect green_index: Int = green
+  expect yellow_signal: Signal = yellow
+
+  and {
+    red_index == 0,
+    yellow_index == 7,
+    green_index == 2,
+    yellow_signal == Yellow,
   }
 }
 
