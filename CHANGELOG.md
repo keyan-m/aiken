@@ -1,5 +1,11 @@
 # Changelog
 
+## [next] - YYYY-MM-DD
+
+### Added
+
+- **aiken-lang**: New `@int` type decorator for nullary enum types, encoding constructors as integer data while honoring constructor-level `@tag` overrides.
+
 ## v1.1.22 - 2026-05-15
 
 ### Added
