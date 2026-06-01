@@ -4461,12 +4461,77 @@ fn decorator_validation_encoding_on_enum_member() {
 }
 
 #[test]
+fn decorator_validation_int_on_enum_member() {
+    let source_code = r#"
+        pub type Redeemer {
+          @int
+          Buy
+          Cancel
+        }
+    "#;
+
+    assert!(matches!(
+        check(parse(source_code)),
+        Err((_, Error::DecoratorValidation { .. }))
+    ))
+}
+
+#[test]
 fn decorator_validation_tag_on_enum() {
     let source_code = r#"
         @tag(12)
         pub type Redeemer {
           Buy
           Cancel
+        }
+    "#;
+
+    assert!(matches!(
+        check(parse(source_code)),
+        Err((_, Error::DecoratorValidation { .. }))
+    ))
+}
+
+#[test]
+fn decorator_validation_int_enum_constructor_with_fields() {
+    let source_code = r#"
+        @int
+        pub type Redeemer {
+          Buy
+          Cancel(Int)
+        }
+    "#;
+
+    assert!(matches!(
+        check(parse(source_code)),
+        Err((_, Error::DecoratorValidation { .. }))
+    ))
+}
+
+#[test]
+fn decorator_validation_int_tagged_enum_constructor_with_fields() {
+    let source_code = r#"
+        @int
+        pub type Redeemer {
+          Refund
+          @tag(12)
+          Buy { amount: Int }
+          Cancel
+        }
+    "#;
+
+    assert!(matches!(
+        check(parse(source_code)),
+        Err((_, Error::DecoratorValidation { .. }))
+    ))
+}
+
+#[test]
+fn decorator_validation_int_on_record() {
+    let source_code = r#"
+        @int
+        pub type Datum {
+          thing: Int,
         }
     "#;
 
@@ -4531,6 +4596,52 @@ fn decorator_validation_legit_enum() {
 }
 
 #[test]
+fn decorator_validation_legit_enum_int() {
+    let source_code = r#"
+        @int
+        pub type Redeemer {
+          Refund
+          Buy
+          Cancel
+        }
+    "#;
+
+    assert!(dbg!(check(parse(source_code))).is_ok())
+}
+
+#[test]
+fn decorator_validation_legit_enum_int_with_tags() {
+    let source_code = r#"
+        @int
+        pub type Redeemer {
+          @tag(12)
+          Refund
+          @tag(7)
+          Buy
+          @tag(42)
+          Cancel
+        }
+    "#;
+
+    assert!(dbg!(check(parse(source_code))).is_ok())
+}
+
+#[test]
+fn decorator_validation_legit_enum_int_with_partial_tags() {
+    let source_code = r#"
+        @int
+        pub type Redeemer {
+          Refund
+          @tag(12)
+          Buy
+          Cancel
+        }
+    "#;
+
+    assert!(dbg!(check(parse(source_code))).is_ok())
+}
+
+#[test]
 fn decorator_validation_overlaping_tags_explicit() {
     let source_code = r#"
         pub type Redeemer {
@@ -4550,6 +4661,41 @@ fn decorator_validation_overlaping_tags_explicit() {
 #[test]
 fn decorator_validation_overlaping_tags() {
     let source_code = r#"
+        pub type Redeemer {
+          @tag(1)
+          Buy
+          Cancel
+        }
+    "#;
+
+    assert!(matches!(
+        check(parse(source_code)),
+        Err((_, Error::DecoratorTagOverlap { .. }))
+    ))
+}
+
+#[test]
+fn decorator_validation_int_overlaping_tags_explicit() {
+    let source_code = r#"
+        @int
+        pub type Redeemer {
+          @tag(4)
+          Buy
+          @tag(4)
+          Cancel
+        }
+    "#;
+
+    assert!(matches!(
+        check(parse(source_code)),
+        Err((_, Error::DecoratorTagOverlap { .. }))
+    ))
+}
+
+#[test]
+fn decorator_validation_int_overlaping_tags() {
+    let source_code = r#"
+        @int
         pub type Redeemer {
           @tag(1)
           Buy
