@@ -181,6 +181,25 @@ mod tests {
     }
 
     #[test]
+    fn int_decorator() {
+        assert_export!(
+            r#"
+            @int
+            pub type Signal {
+              Red
+              @tag(7)
+              Yellow
+              Green
+            }
+
+            pub fn same(signal: Signal) -> Signal {
+              signal
+            }
+            "#
+        );
+    }
+
+    #[test]
     fn illegal_opaque_type() {
         assert_export!(
             r#"
