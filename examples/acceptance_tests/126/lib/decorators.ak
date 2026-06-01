@@ -113,17 +113,36 @@ test int_decorator() {
   let red: Data = Red
   let yellow: Data = Yellow
   let green = Green |> as_data
+  let red_data_from_int: Data = 0
+  let yellow_data_from_int: Data = 7
+  let green_data_from_int: Data = 2
 
   expect red_index: Int = red
   expect yellow_index: Int = yellow
   expect green_index: Int = green
-  expect yellow_signal: Signal = yellow
+  expect yellow_signal: Signal = yellow_data_from_int
+  expect Red: Signal = red_data_from_int
+  expect Yellow: Signal = yellow_data_from_int
+  expect Green: Signal = green_data_from_int
+
+  let red_does_not_match_yellow = if yellow_data_from_int is Red: Signal {
+    False
+  } else {
+    True
+  }
+
+  let yellow_signal_is_yellow = when yellow_signal is {
+    Yellow -> True
+    _ -> False
+  }
 
   and {
     red_index == 0,
     yellow_index == 7,
     green_index == 2,
     yellow_signal == Yellow,
+    red_does_not_match_yellow,
+    yellow_signal_is_yellow,
   }
 }
 
