@@ -18,8 +18,8 @@ description: "Code:\n\n@int\npub type Signal {\n  Red\n  @tag(7)\n  Yellow\n  Gr
       "$ref": "#/definitions/test_module~1Signal"
     }
   },
-  "compiledCode": "46010100200101",
-  "hash": "e090c94a874e6f220d343402ca1287b0b333daedaf0bd3d4335006bb",
+  "compiledCode": "470101002375a003",
+  "hash": "ae18b51056d06a9026ef1c890d222c68dd4d96ab949530231a87cbda",
   "definitions": {
     "test_module/Signal": {
       "title": "Signal",

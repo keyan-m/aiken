@@ -50,6 +50,20 @@ pub fn has_decorator(
         .any(|decorator| predicate(&decorator.kind))
 }
 
+fn has_data_casting_decorator(
+    tipo: &Type,
+    data_types: &IndexMap<&DataTypeKey, &TypedDataType>,
+) -> bool {
+    lookup_data_type_by_tipo(data_types, tipo)
+        .as_ref()
+        .map(|dt| {
+            has_decorator(dt, |kind| {
+                matches!(kind, DecoratorKind::List | DecoratorKind::Int)
+            })
+        })
+        .unwrap_or(false)
+}
+
 #[derive(Clone, Debug)]
 #[allow(clippy::large_enum_variant)]
 pub enum CodeGenFunction {
@@ -1220,7 +1234,9 @@ pub fn cast_validator_args(
             .map(|arg| interner.lookup_interned(&arg.to_string()))
             .unwrap_or_else(|| "_".to_string());
 
-        if !matches!(arg.tipo.get_uplc_type(), Some(UplcType::Data) | None) {
+        if !matches!(arg.tipo.get_uplc_type(), Some(UplcType::Data) | None)
+            || has_data_casting_decorator(&arg.tipo, data_types)
+        {
             term = term.lambda(&name).apply(known_data_to_type(
                 Term::var(&name),
                 &arg.tipo,
