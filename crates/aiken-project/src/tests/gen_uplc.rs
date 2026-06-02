@@ -5,7 +5,7 @@ use pallas_primitives::conway::Language;
 use pretty_assertions::assert_eq;
 use std::rc::Rc;
 use uplc::{
-    ast::{Constant, Data, DeBruijn, Name, Program, Term, Type},
+    ast::{Constant, Data, DeBruijn, Name, NamedDeBruijn, Program, Term, Type},
     builder::{CONSTR_FIELDS_EXPOSER, CONSTR_INDEX_EXPOSER, EXPECT_ON_LIST},
     machine::{cost_model::ExBudget, runtime::Compressable},
     optimize::{self},
@@ -116,6 +116,92 @@ fn assert_uplc(source_code: &str, expected: Term<Name>, should_fail: bool, verbo
             );
         }
     }
+}
+
+fn eval_raw_function_with_args(
+    source_code: &str,
+    function_name: &str,
+    args: Vec<Term<Name>>,
+) -> Term<NamedDeBruijn> {
+    let mut project = TestProject::new();
+
+    let modules = CheckedModules::singleton(project.check(project.parse(source_code)));
+
+    let mut generator = project.new_generator(Tracing::All(TraceLevel::Verbose));
+
+    let Some(checked_module) = modules.values().next() else {
+        unreachable!("There's got to be one right?")
+    };
+
+    let func = checked_module
+        .ast
+        .definitions()
+        .find_map(|def| match def {
+            Definition::Fn(func) if func.name == function_name => Some(func),
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("source code did not yield function {function_name}"));
+
+    let mut program = generator.generate_raw(&func.body, &func.arguments, &checked_module.name);
+
+    for arg in args {
+        program.term = program.term.apply(arg);
+    }
+
+    let program: Program<DeBruijn> = program.try_into().unwrap();
+
+    program.eval(ExBudget::default()).result().unwrap()
+}
+
+#[test]
+fn list_decorator_raw_function_argument_from_data() {
+    let src = r#"
+        @list
+        pub type Product {
+          x: Int,
+          y: Int,
+        }
+
+        pub fn sum(product: Product) -> Int {
+          product.x + product.y
+        }
+    "#;
+
+    let result = eval_raw_function_with_args(
+        src,
+        "sum",
+        vec![Term::data(Data::list(vec![
+            Data::integer(1.into()),
+            Data::integer(2.into()),
+        ]))],
+    );
+
+    assert_eq!(result, Term::integer(3.into()));
+}
+
+#[test]
+fn int_decorator_raw_function_argument_from_data() {
+    let src = r#"
+        @int
+        pub type Signal {
+          Red
+          Yellow
+          Green
+        }
+
+        pub fn to_int(signal: Signal) -> Int {
+          when signal is {
+            Red -> 1
+            Yellow -> 2
+            Green -> 3
+          }
+        }
+    "#;
+
+    let result =
+        eval_raw_function_with_args(src, "to_int", vec![Term::data(Data::integer(1.into()))]);
+
+    assert_eq!(result, Term::integer(2.into()));
 }
 
 #[test]
