@@ -1653,8 +1653,14 @@ impl<'a> CodeGenerator<'a> {
                     .decorators
                     .iter()
                     .any(|dec| matches!(dec.kind, DecoratorKind::List));
+                let int_decorator = data_type
+                    .decorators
+                    .iter()
+                    .any(|dec| matches!(dec.kind, DecoratorKind::Int));
 
-                let then = if check_replaceable_opaque_type(tipo, &self.data_types) {
+                let then = if int_decorator {
+                    then
+                } else if check_replaceable_opaque_type(tipo, &self.data_types) {
                     AirTree::let_assignment(&fields[0].1, local_value.clone(), then)
                 } else {
                     AirTree::fields_expose(
